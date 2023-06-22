@@ -1,5 +1,6 @@
 package com.chartboost.mediation.unity
 
+import android.util.DisplayMetrics
 import com.chartboost.heliumsdk.*
 import com.chartboost.heliumsdk.ad.*
 import com.chartboost.heliumsdk.ad.HeliumBannerAd.HeliumBannerSize
@@ -153,7 +154,7 @@ class UnityBridge {
         }
 
         @JvmStatic
-        fun getBannerAd(placementName: String, size: Int): AdWrapper {
+        fun getBannerAd(placementName: String, size: Int): BannerAdWrapper {
             // default to standard
             var wantedSize = HeliumBannerSize.STANDARD
             when (size) {
@@ -187,7 +188,12 @@ class UnityBridge {
                         })
                 }
             })
-            return wrap(bannerAd)
+            return BannerAdWrapper.wrap(bannerAd)
+        }
+
+        @JvmStatic
+        fun getUIScaleFactor(): Float {
+            return UnityPlayer.currentActivity.resources?.displayMetrics?.density ?: DisplayMetrics.DENSITY_DEFAULT.toFloat()
         }
     }
 }

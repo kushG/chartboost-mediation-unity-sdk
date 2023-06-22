@@ -1,3 +1,4 @@
+using System;
 using Chartboost.Interfaces;
 using Chartboost.Utilities;
 
@@ -39,6 +40,10 @@ namespace Chartboost.Banner
         /// <inheritdoc cref="IChartboostMediationBannerAd.Load"/>>
         public virtual void Load(ChartboostMediationBannerAdScreenLocation location)
             => Logger.Log(LogTag, $"loading banner: {placementName} with size: {_size} at {location}");
+        
+        /// <inheritdoc cref="IChartboostMediationBannerAd.Load(float, float, int, int)"/>
+        public virtual void Load(float x, float y, int width, int height)
+            => Logger.Log(LogTag, $"loading banner: {placementName} at position :{x},{y} and size : {width},{height}");
 
         /// <inheritdoc cref="IChartboostMediationBannerAd.SetVisibility"/>>
         public virtual void SetVisibility(bool isVisible)
@@ -51,6 +56,14 @@ namespace Chartboost.Banner
         /// <inheritdoc cref="IChartboostMediationBannerAd.Remove"/>>
         public virtual void Remove()
             => Logger.Log(LogTag, $"removing banner: {placementName}");
+
+        /// <inheritdoc cref="IChartboostMediationBannerAd.EnableDrag"/>>
+        public virtual void EnableDrag(Action<float, float> onDrag = null)
+            => Logger.Log(LogTag, $"Dragging enabled");
+
+        /// <inheritdoc cref="IChartboostMediationBannerAd.DisableDrag"/>>
+        public virtual void DisableDrag()
+            => Logger.Log(LogTag, $"Dragging disabled");
     }
 
     /// <summary>

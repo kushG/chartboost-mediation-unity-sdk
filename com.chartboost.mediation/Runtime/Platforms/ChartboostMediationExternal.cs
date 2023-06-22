@@ -72,6 +72,11 @@ namespace Chartboost.Platforms
             return string.Empty;
         }
         
+        public virtual float GetUIScaleFactor()
+        { 
+            return 1f;
+        }
+        
         public virtual void SetTestMode(bool testModeEnabled) 
             => Logger.Log(LogTag, $"SetTestMode {testModeEnabled}");
 

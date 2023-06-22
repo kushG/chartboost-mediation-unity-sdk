@@ -1,3 +1,5 @@
+using System;
+
 namespace Chartboost.Banner
 {
     /// <summary>
@@ -34,7 +36,7 @@ namespace Chartboost.Banner
     {
         private readonly ChartboostMediationBannerBase _platformBanner;
 
-        public ChartboostMediationBannerAd(string placementName, ChartboostMediationBannerAdSize size) : base(placementName, size)
+        public ChartboostMediationBannerAd(string placementName, ChartboostMediationBannerAdSize size) : base( placementName, size)
         {
             #if UNITY_EDITOR
             _platformBanner = new ChartboostMediationBannerUnsupported(placementName, size);
@@ -62,7 +64,11 @@ namespace Chartboost.Banner
         /// <inheritdoc cref="ChartboostMediationBannerBase.Load"/>>
         public override void Load(ChartboostMediationBannerAdScreenLocation location) 
             => _platformBanner.Load(location);
-        
+
+        /// <inheritdoc cref="ChartboostMediationBannerBase.Load"/>>
+        public override void Load(float x, float y, int width, int height)
+            => _platformBanner.Load(x, y, width, height);
+
         /// <inheritdoc cref="ChartboostMediationBannerBase.SetVisibility"/>>
         public override void SetVisibility(bool isVisible) 
             =>_platformBanner.SetVisibility(isVisible);
@@ -74,5 +80,13 @@ namespace Chartboost.Banner
         /// <inheritdoc cref="ChartboostMediationBannerBase.Remove"/>>
         public override void Remove()
             =>_platformBanner.Remove();
+
+        /// <inheritdoc cref="ChartboostMediationBannerBase.EnableDrag"/>>
+        public override void EnableDrag(Action<float, float> onDrag = null)
+            => _platformBanner.EnableDrag(onDrag);
+
+        /// <inheritdoc cref="ChartboostMediationBannerBase.DisableDrag"/>>
+        public override void DisableDrag()
+            => _platformBanner.DisableDrag();
     }
 }

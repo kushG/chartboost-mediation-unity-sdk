@@ -1,4 +1,5 @@
 #if UNITY_ANDROID
+using System;
 using Chartboost.Interfaces;
 using Chartboost.Platforms.Android;
 using UnityEngine;
@@ -40,11 +41,18 @@ namespace Chartboost.Banner
             _androidAd.Call("destroy");
         }
 
-        /// <inheritdoc cref="IChartboostMediationBannerAd.Load"/>>
+        /// <inheritdoc cref="IChartboostMediationBannerAd.Load(Chartboost.Banner.ChartboostMediationBannerAdScreenLocation)"/>>
         public override void Load(ChartboostMediationBannerAdScreenLocation location)
         {
             base.Load(location);
             _androidAd.Call("load", (int)location);
+        }
+
+        /// <inheritdoc cref="IChartboostMediationBannerAd.Load"/>>
+        public override void Load(float x, float y, int width, int height)
+        {
+            base.Load(x, y, width, height);
+            _androidAd.Call("load", x, Screen.height - y, width, height);   // Android measures pixels from top whereas Unity measures pixels from bottom of screen
         }
 
         /// <inheritdoc cref="IChartboostMediationBannerAd.SetVisibility"/>>
@@ -67,6 +75,35 @@ namespace Chartboost.Banner
             //android doesn't have a remove method. Instead, calling destroy
             Destroy();
         }
+
+        /// <inheritdoc cref="IChartboostMediationBannerAd.EnableDrag"/>>
+        public override void EnableDrag(Action<float, float> onDrag = null)
+        {
+            base.EnableDrag(onDrag);
+            _androidAd.Call("enableDrag", new BannerDragEventListener(onDrag));
+        }
+
+        /// <inheritdoc cref="IChartboostMediationBannerAd.DisableDrag"/>>
+        public override void DisableDrag()
+        {
+            base.DisableDrag();
+            _androidAd.Call("disableDrag");
+        }
+    }
+}
+
+public class BannerDragEventListener : AndroidJavaProxy
+{
+    private Action<float, float> _onDrag;
+    
+    public BannerDragEventListener(Action<float, float> onDrag) : base("com.chartboost.mediation.unity.IBannerDragEventListener")
+    {
+        _onDrag = onDrag;
+    }
+
+    private void OnDrag(float x, float y)
+    {
+        _onDrag?.Invoke(x, Screen.height - y);
     }
 }
 #endif

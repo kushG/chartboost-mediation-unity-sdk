@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Chartboost.AdFormats.Banner.Unity;
 using Chartboost.Banner;
 using Chartboost.FullScreen.Interstitial;
 using Chartboost.FullScreen.Rewarded;
@@ -210,6 +211,23 @@ namespace Chartboost
         public static ChartboostMediationBannerAd GetBannerAd(string placementName, ChartboostMediationBannerAdSize size)
             => _chartboostMediationExternal.GetBannerAd(placementName, size);
 
+        /// <summary>
+        /// Creates and returns a gameobject that can be used to load and display banner ads.
+        /// </summary>
+        /// <param name="placementName"></param>
+        /// <param name="size"></param>
+        /// <param name="screenLocation"></param>
+        /// <returns></returns>
+        public static ChartboostMediationUnityBannerAd GetUnityBannerAd(
+            string placementName,
+            ChartboostMediationBannerAdSize size = ChartboostMediationBannerAdSize.Standard,
+            ChartboostMediationBannerAdScreenLocation screenLocation = ChartboostMediationBannerAdScreenLocation.Center)
+        {
+            var ad =  ChartboostMediationUnityBannerAd.Instantiate(size, screenLocation);
+            ad.bannerPlacementName = placementName;
+            return ad;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Init()
         {
@@ -231,5 +249,7 @@ namespace Chartboost
         public static void SetUserIdentifier(string userIdentifier) => _chartboostMediationExternal.SetUserIdentifier(userIdentifier);
         public static string GetUserIdentifier() => _chartboostMediationExternal.GetUserIdentifier();
         public static void SetTestMode(bool testModeEnabled) => _chartboostMediationExternal.SetTestMode(testModeEnabled);
+        public static float GetUIScaleFactor() => _chartboostMediationExternal.GetUIScaleFactor();
+
     }
 }

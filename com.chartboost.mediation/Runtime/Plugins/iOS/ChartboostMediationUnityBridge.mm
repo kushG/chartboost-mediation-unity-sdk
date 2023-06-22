@@ -3,10 +3,12 @@
 * Chartboost Mediation SDK iOS/Unity
 */
 
+
 #import <objc/runtime.h>
 #import <ChartboostMediationSDK/ChartboostMediationSDK-Swift.h>
 #import <ChartboostMediationSDK/HeliumInitResultsEvent.h>
 #import "UnityAppController.h"
+#import "ChartboostMediationBannerAdWrapper.h"
 
 // Converts C style string to NSString
 #define GetStringParam(_x_) (_x_ != NULL) ? [NSString stringWithUTF8String:_x_] : [NSString stringWithUTF8String:""]
@@ -102,6 +104,18 @@ const void serializePlacementLoadWithError(NSString *placementName, NSString *re
         price = 0;
     
     placementLoadEvent(placementName.UTF8String, requestIdentifier.UTF8String, auctionId.UTF8String, partnerId.UTF8String, [price doubleValue], lineItemId.UTF8String, error.localizedDescription.UTF8String);
+}
+
+static HeliumBannerView * _getBannerView(const void * uniqueId){
+    ChartboostMediationBannerAdWrapper *bannerWrapper =(__bridge ChartboostMediationBannerAdWrapper*)uniqueId;
+    HeliumBannerView* bannerView = bannerWrapper.bannerView;
+    return bannerView;
+}
+
+static id<HeliumBannerAd>  _getBannerAd(const void * uniqueId){
+    ChartboostMediationBannerAdWrapper *bannerWrapper =(__bridge ChartboostMediationBannerAdWrapper*)uniqueId;
+    id<HeliumBannerAd> ad = bannerWrapper.bannerView;
+    return ad;
 }
 
 static NSMutableDictionary * storedAds;
@@ -456,6 +470,11 @@ void _chartboostMediationSetTestMode(BOOL isTestModeEnabled)
     function([ChartboostMediationObserver sharedObserver], implementation.selector, isTestModeEnabled);
 }
 
+float _chartboostMediationGetUIScaleFactor() {
+    // TODO: https://github.com/ChartBoost/ios-helium-sdk/pull/1314
+    return UIScreen.mainScreen.scale;
+}
+
 void * _chartboostMediationGetInterstitialAd(const char *placementName)
 {
     id<HeliumInterstitialAd> ad = [[Helium sharedHelium] interstitialAdProviderWithDelegate: [ChartboostMediationObserver sharedObserver] andPlacementName: GetStringParam(placementName)];
@@ -607,7 +626,7 @@ void _chartboostMediationShowFullscreenAd(const void *uniqueId, int hashCode, Ch
                 callback(hashCode, "", code, message);
                 return;
             }
-        
+            
             const char *metricsJson = dictionaryToJSON([adShowResult metrics]);
             UnityPause(true);
             callback(hashCode, metricsJson, "", "");
@@ -649,27 +668,31 @@ void * _chartboostMediationGetBannerAd(const char *placementName, long size)
     }
     
     HeliumBannerView *ad = [[Helium sharedHelium] bannerProviderWithDelegate:[ChartboostMediationObserver sharedObserver] andPlacementName:GetStringParam(placementName) andSize:cbSize];
-
+    
     if (ad == NULL)
         return NULL;
-        
-    [[ChartboostMediationObserver sharedObserver] storeAd:ad placementName:placementName multiPlacementSupport:true];
-    return (__bridge void*)ad;
+    
+    ChartboostMediationBannerAdWrapper *wrapper = [[ChartboostMediationBannerAdWrapper alloc] initWithBannerView:ad];
+    [[ChartboostMediationObserver sharedObserver] storeAd:wrapper placementName:placementName multiPlacementSupport:true];
+    return (__bridge void*)wrapper;
+    
+    //    [[ChartboostMediationObserver sharedObserver] storeAd:ad placementName:placementName multiPlacementSupport:true];
+    //    return (__bridge void*)ad;
 }
 
 BOOL _chartboostMediationBannerSetKeyword(const void *uniqueId, const char *keyword, const char *value)
 {
-    id<HeliumBannerAd> ad = (__bridge id<HeliumBannerAd>)uniqueId;
-    sendToMain(^{
-        if (ad.keywords == nil)
-            ad.keywords = [[HeliumKeywords alloc] init];
-    });
-    return [ad.keywords setKeyword:GetStringParam(keyword) value:GetStringParam(value)];
+    id<HeliumBannerAd> ad = _getBannerAd(uniqueId);
+        sendToMain(^{
+            if (ad.keywords == nil)
+                ad.keywords = [[HeliumKeywords alloc] init];
+        });
+        return [ad.keywords setKeyword:GetStringParam(keyword) value:GetStringParam(value)];
 }
 
 char * _chartboostMediationBannerRemoveKeyword(const void *uniqueId, const char *keyword)
 {
-    id<HeliumBannerAd> ad = (__bridge id<HeliumBannerAd>)uniqueId;
+    id<HeliumBannerAd> ad = _getBannerAd(uniqueId);
     return ConvertNSStringToCString([ad.keywords removeKeyword:GetStringParam(keyword)]);
 }
 
@@ -683,7 +706,7 @@ void _chartboostMediationBannerAdLoad(const void * uniqueId, long screenLocation
         //     BottomLeft = 4,
         //     BottomCenter = 5,
         //     BottomRight = 6
-        HeliumBannerView* bannerView = (__bridge HeliumBannerView*)uniqueId;
+        HeliumBannerView* bannerView = _getBannerView(uniqueId);
         //TODO handle the null case
         UIViewController *unityVC = GetAppController().rootViewController;
         UILayoutGuide *safeGuide;
@@ -695,7 +718,7 @@ void _chartboostMediationBannerAdLoad(const void * uniqueId, long screenLocation
         [bannerView removeFromSuperview];
         [unityVC.view  addSubview:bannerView];
         NSLayoutConstraint *xConstraint;
-
+        
         switch (screenLocation) // X Constraints
         {
             case 1: // Top Center
@@ -710,7 +733,7 @@ void _chartboostMediationBannerAdLoad(const void * uniqueId, long screenLocation
             default:
                 xConstraint = [bannerView.leadingAnchor constraintEqualToAnchor:safeGuide.leadingAnchor];
         }
-
+        
         NSLayoutConstraint *yConstraint;
         switch (screenLocation) // Y Constraints
         {
@@ -727,15 +750,41 @@ void _chartboostMediationBannerAdLoad(const void * uniqueId, long screenLocation
             default:
                 yConstraint = [bannerView.centerYAnchor constraintEqualToAnchor:safeGuide.centerYAnchor];
         }
-
+        
         [NSLayoutConstraint activateConstraints:@[
             [bannerView.widthAnchor constraintEqualToConstant:bannerView.frame.size.width],
             [bannerView.heightAnchor constraintEqualToConstant:bannerView.frame.size.height],
             xConstraint,
             yConstraint
         ]];
+        
+        id<HeliumBannerAd> ad = _getBannerAd(uniqueId);
+        [ad loadAdWithViewController:unityVC];
+        
+        
+    });
+}
 
-        id<HeliumBannerAd> ad = (__bridge id<HeliumBannerAd>)uniqueId;
+void _chartboostMediationBannerAdLoadWithParams(const void * uniqueId, float x, float y, long width, long height)
+{
+    sendToMain(^{
+        
+        HeliumBannerView* bannerView = _getBannerView(uniqueId);
+        //TODO handle the null case
+        UIViewController *unityVC = GetAppController().rootViewController;
+        UILayoutGuide *safeGuide;
+        if (@available(iOS 11.0, *))
+            safeGuide = unityVC.view.safeAreaLayoutGuide;
+        else
+            safeGuide = unityVC.view.layoutMarginsGuide;
+
+        [bannerView removeFromSuperview];
+        [unityVC.view  addSubview:bannerView];
+        
+        float scale = UIScreen.mainScreen.scale;
+        bannerView.frame = CGRectMake(x/scale, y/scale, width/scale, height/scale);
+
+        id<HeliumBannerAd> ad = _getBannerAd(uniqueId);
         [ad loadAdWithViewController:unityVC];
     });
 }
@@ -743,7 +792,7 @@ void _chartboostMediationBannerAdLoad(const void * uniqueId, long screenLocation
 void _chartboostMediationBannerClearLoaded(const void * uniqueId)
 {
     sendToMain(^(){
-        id<HeliumBannerAd> ad = (__bridge id<HeliumBannerAd>)uniqueId;
+        id<HeliumBannerAd> ad = _getBannerAd(uniqueId);
         [ad clearAd];
     });
 }
@@ -751,7 +800,7 @@ void _chartboostMediationBannerClearLoaded(const void * uniqueId)
 void _chartboostMediationBannerRemove(const void * uniqueId)
 {
     sendToMain(^(){
-        HeliumBannerView* bannerView = (__bridge HeliumBannerView*)uniqueId;
+        HeliumBannerView* bannerView = _getBannerView(uniqueId);
         [bannerView removeFromSuperview];
         [[ChartboostMediationObserver sharedObserver] releaseAd: [NSNumber numberWithLong:(long)uniqueId] placementName:nil multiPlacementSupport:true];
     });
@@ -760,7 +809,7 @@ void _chartboostMediationBannerRemove(const void * uniqueId)
 void _chartboostMediationBannerSetVisibility(const void * uniqueId, BOOL isVisible)
 {
     sendToMain(^{
-        HeliumBannerView* bannerView = (__bridge HeliumBannerView*)uniqueId;
+        HeliumBannerView* bannerView = _getBannerView(uniqueId);
         [bannerView setHidden:!isVisible];
     });
 }
@@ -771,4 +820,15 @@ void _chartboostMediationFreeAdObject(const void * uniqueId, const char * placem
         [[ChartboostMediationObserver sharedObserver] releaseAd: [NSNumber numberWithLong:(long)uniqueId] placementName:GetStringParam(placementName) multiPlacementSupport:multiPlacementSupport];
     });
 }
+
+void _chartboostMediationEnableBannerDrag(const void * uniqueId, ChartboostMediationBannerDragEvent dragListener){
+    ChartboostMediationBannerAdWrapper *bannerWrapper =(__bridge ChartboostMediationBannerAdWrapper*)uniqueId;
+    [bannerWrapper enableDragWithDragListener:dragListener];
+}
+
+void _chartboostMediationDisableBannerDrag(const void * uniqueId){
+    ChartboostMediationBannerAdWrapper *bannerWrapper =(__bridge ChartboostMediationBannerAdWrapper*)uniqueId;
+    [bannerWrapper disableDrag];
+}
+
 }

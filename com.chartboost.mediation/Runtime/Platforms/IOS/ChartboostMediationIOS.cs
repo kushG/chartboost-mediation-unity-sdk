@@ -38,6 +38,10 @@ namespace Chartboost.Platforms.IOS
 
         [DllImport("__Internal")]
         private static extern void _chartboostMediationSetTestMode(bool isTestMode);
+        
+        [DllImport("__Internal")]
+        private static extern float _chartboostMediationGetUIScaleFactor();
+        
         #endregion
 
         #region Chartboost Mediation
@@ -127,6 +131,12 @@ namespace Chartboost.Platforms.IOS
         {
             base.SetTestMode(testModeEnabled);
             _chartboostMediationSetTestMode(testModeEnabled);
+        }
+
+        public override float GetUIScaleFactor()
+        {
+            base.GetUIScaleFactor();
+            return _chartboostMediationGetUIScaleFactor();
         }
 
         public override async Task<ChartboostMediationFullscreenAdLoadResult> LoadFullscreenAd(ChartboostMediationFullscreenAdLoadRequest request)

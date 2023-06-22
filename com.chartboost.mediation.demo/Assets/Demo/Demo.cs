@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics.CodeAnalysis;
 using Chartboost;
+using Chartboost.AdFormats.Banner.Unity;
 using Chartboost.AdFormats.Fullscreen;
 using Chartboost.Banner;
 using Chartboost.Requests;
@@ -31,7 +32,8 @@ public class Demo : MonoBehaviour
     public InputField bannerPlacementInputField;
     public Dropdown bannerSizeDropdown;
     public Dropdown bannerLocationDropdown;
-    private ChartboostMediationBannerAd _bannerAd;
+    public Sprite bannerVisualizerSprite;
+    private ChartboostMediationUnityBannerAd _bannerAd;
     private bool _bannerAdIsVisible;
 
     public ScrollRect outputTextScrollRect;
@@ -47,7 +49,6 @@ public class Demo : MonoBehaviour
         ChartboostMediation.DidReceivePartnerInitializationData += DidReceivePartnerInitializationData;
         ChartboostMediation.DidReceiveImpressionLevelRevenueData += DidReceiveImpressionLevelRevenueData;
         ChartboostMediation.UnexpectedSystemErrorDidOccur += UnexpectedSystemErrorDidOccur;
-        SetupBannerDelegates();
     }
     
     private void Start()
@@ -59,6 +60,9 @@ public class Demo : MonoBehaviour
 
         fullscreenPlacementInputField.SetTextWithoutNotify(DefaultPlacementFullscreen);
         bannerPlacementInputField.SetTextWithoutNotify(DefaultPlacementBanner);
+        bannerLocationDropdown.onValueChanged.AddListener(OnBannerLocationDropdownChange);
+        
+        _bannerAd = CreateUnityBannerAd();
 
         ChartboostMediation.StartWithAppIdAndAppSignature(ChartboostMediationSettings.AppId, ChartboostMediationSettings.AppSignature);
     }
@@ -211,33 +215,14 @@ public class Demo : MonoBehaviour
     #endregion
     
     #region Banners
-    private void SetupBannerDelegates()
+    public void OnLoadBannerClick()
     {
-        ChartboostMediation.DidLoadBanner += DidLoadBanner;
-        ChartboostMediation.DidClickBanner += DidClickBanner;
-        ChartboostMediation.DidRecordImpressionBanner += DidRecordImpressionBanner;
-    }
-
-    public void OnCreateBannerClick()
-    {
-        var size = bannerSizeDropdown.value switch
-        {
-            2 => ChartboostMediationBannerAdSize.Leaderboard,
-            1 => ChartboostMediationBannerAdSize.MediumRect,
-            _ => ChartboostMediationBannerAdSize.Standard
-        };
-
-        _bannerAd?.Remove();
-
-        Log("Creating banner on placement: " + bannerPlacementInputField.text + " with size: " + size);
-        _bannerAd = ChartboostMediation.GetBannerAd(bannerPlacementInputField.text, size);
-        
         if (_bannerAd == null)
         {
-            Log("Banner not found");
+            Log("Unity Banner Ad is not created");
             return;
         }
-
+        
         // example keywords usage
         _bannerAd.SetKeyword("bnr_keyword1", "bnr_value1"); // accepted set
         _bannerAd.SetKeyword("bnr_keyword2", "bnr_value2"); // accepted set
@@ -249,20 +234,61 @@ public class Demo : MonoBehaviour
         _bannerAd.SetKeyword("bnr_keyword5", keyword4); // accepted set using prior value
         _bannerAd.SetKeyword("bnr_keyword6", "bnr_value6"); // accepted set
         _bannerAd.SetKeyword("bnr_keyword6", "bnr_value6_replaced"); // accepted replace
-        var screenPos = bannerLocationDropdown.value switch
-        {
-            0 => ChartboostMediationBannerAdScreenLocation.TopLeft,
-            1 => ChartboostMediationBannerAdScreenLocation.TopCenter,
-            2 => ChartboostMediationBannerAdScreenLocation.TopRight,
-            3 => ChartboostMediationBannerAdScreenLocation.Center,
-            4 => ChartboostMediationBannerAdScreenLocation.BottomLeft,
-            5 => ChartboostMediationBannerAdScreenLocation.BottomCenter,
-            6 => ChartboostMediationBannerAdScreenLocation.BottomRight,
-            _ => ChartboostMediationBannerAdScreenLocation.TopCenter
-        };
-        _bannerAd.Load(screenPos);
+        
+        _bannerAd.Load();
     }
 
+    private ChartboostMediationUnityBannerAd CreateUnityBannerAd()
+    {
+        var size = bannerSizeDropdown.value switch
+        {
+            2 => ChartboostMediationBannerAdSize.Leaderboard,
+            1 => ChartboostMediationBannerAdSize.MediumRect,
+            _ => ChartboostMediationBannerAdSize.Standard
+        };
+
+        ChartboostMediationUnityBannerAd unityBannerAd;
+
+        if (bannerLocationDropdown.value == 7)
+        {
+            Log("Creating banner on placement: " + bannerPlacementInputField.text + " with size: " + size);
+            unityBannerAd = ChartboostMediation.GetUnityBannerAd(bannerPlacementInputField.text, size);
+            
+            unityBannerAd.ShowOutline(true);
+        }
+        else
+        {
+            var screenPos = bannerLocationDropdown.value switch
+            {
+                0 => ChartboostMediationBannerAdScreenLocation.TopLeft,
+                1 => ChartboostMediationBannerAdScreenLocation.TopCenter,
+                2 => ChartboostMediationBannerAdScreenLocation.TopRight,
+                3 => ChartboostMediationBannerAdScreenLocation.Center,
+                4 => ChartboostMediationBannerAdScreenLocation.BottomLeft,
+                5 => ChartboostMediationBannerAdScreenLocation.BottomCenter,
+                6 => ChartboostMediationBannerAdScreenLocation.BottomRight,
+                _ => ChartboostMediationBannerAdScreenLocation.TopCenter
+            };
+
+            Log($"Creating banner on placement: {bannerPlacementInputField.text} with size: {size} and screenPos : {screenPos}");
+            unityBannerAd = ChartboostMediation.GetUnityBannerAd(bannerPlacementInputField.text, size, screenPos);
+        }
+
+        unityBannerAd.autoLoadOnInit = false;
+        unityBannerAd.DidLoadBanner += DidLoadBanner;
+        unityBannerAd.DidClickBanner += DidClickBanner;
+        unityBannerAd.DidRecordImpressionBanner += DidRecordImpressionBanner;
+
+        return unityBannerAd;
+    }
+
+    private void OnBannerLocationDropdownChange(int val)
+    {
+        // Remove existing and replace with new
+        _bannerAd?.Remove();
+        _bannerAd = CreateUnityBannerAd();
+    }
+    
     public void OnRemoveBannerClick()
     {
         _bannerAd?.Remove();

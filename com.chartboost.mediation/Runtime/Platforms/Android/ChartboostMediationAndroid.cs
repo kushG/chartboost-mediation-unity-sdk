@@ -108,6 +108,13 @@ namespace Chartboost.Platforms.Android
             nativeSDK.CallStatic("setTestMode", testModeEnabled);
         }
 
+        public override float GetUIScaleFactor()
+        {
+            using var unityBridge = GetUnityBridge();
+            var scale = unityBridge.CallStatic<float>("getUIScaleFactor");
+            return scale;
+        }
+
         public override void Destroy()
         {
             if (!CheckInitialized())
