@@ -63,6 +63,7 @@ public class Demo : MonoBehaviour
         bannerLocationDropdown.onValueChanged.AddListener(OnBannerLocationDropdownChange);
         
         _bannerAd = CreateUnityBannerAd();
+        _bannerAd.autoLoadOnInit = false;
 
         ChartboostMediation.StartWithOptions(ChartboostMediationSettings.AppId, ChartboostMediationSettings.AppSignature);
     }
