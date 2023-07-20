@@ -1,6 +1,5 @@
 package com.chartboost.mediation.unity
 
-import android.util.DisplayMetrics
 import com.chartboost.heliumsdk.*
 import com.chartboost.heliumsdk.ad.*
 import com.chartboost.heliumsdk.ad.HeliumBannerAd.HeliumBannerSize
@@ -44,6 +43,7 @@ class UnityBridge {
         fun loadFullscreenAd(adRequest: ChartboostMediationAdLoadRequest, adLoadResultHandler: ChartboostMediationFullscreenAdLoadListener, fullscreenAdListener: ChartboostMediationFullscreenAdListener) {
             CoroutineScope(Main).launch {
                 val adLoadResult = HeliumSdk.loadFullscreenAd(UnityPlayer.currentActivity, adRequest, fullscreenAdListener)
+                adLoadResult.ad?.let { AdStore.trackFullscreenAd(it) }
                 adLoadResultHandler.onAdLoaded(adLoadResult)
             }
         }
@@ -62,8 +62,8 @@ class UnityBridge {
             val interstitialAd = HeliumInterstitialAd(UnityPlayer.currentActivity, placementName, object : HeliumFullscreenAdListener {
                 override fun onAdCached(placementName: String, loadId: String, winningBidInfo: Map<String, String>, error: ChartboostMediationAdException?) {
                     serializeLoadEvent(placementName, loadId, winningBidInfo, error,
-                        LoadEventConsumer { eventPlacementName: String, eventLoadId: String, auctionId: String, partnerId: String, price: Double, eventLineItemId:String,  eventError: String ->
-                            interstitialEventsListener?.DidLoadInterstitial(eventPlacementName, eventLoadId, auctionId, partnerId, price, eventLineItemId, eventError)
+                        LoadEventConsumer { eventPlacementName: String, eventLoadId: String, auctionId: String, partnerId: String, price: Double, lineItemName:String, lineItemId:String, eventError: String ->
+                            interstitialEventsListener?.DidLoadInterstitial(eventPlacementName, eventLoadId, auctionId, partnerId, price, lineItemName, lineItemId, eventError)
                         }
                     )
                 }
@@ -100,7 +100,8 @@ class UnityBridge {
 //                TODO("Not yet implemented")
                 }
             })
-            return wrap(interstitialAd)
+
+            return trackLegacy(interstitialAd)
         }
 
         @Deprecated("getInterstitialAd has been deprecated, utilize getFullscreenAd instead.")
@@ -109,8 +110,8 @@ class UnityBridge {
             val rewardedAd = HeliumRewardedAd(UnityPlayer.currentActivity, placementName, object : HeliumFullscreenAdListener {
                 override fun onAdCached(placementName: String, loadId: String, winningBidInfo: Map<String, String>, error: ChartboostMediationAdException?) {
                     serializeLoadEvent(placementName, loadId, winningBidInfo, error,
-                        LoadEventConsumer { eventPlacementName: String, eventLoadId: String, auctionId: String, partnerId: String, price: Double, eventLineItemId:String, eventError: String ->
-                            rewardedEventListener?.DidLoadRewarded(eventPlacementName, eventLoadId, auctionId, partnerId, price, eventLineItemId, eventError)
+                        LoadEventConsumer { eventPlacementName: String, eventLoadId: String, auctionId: String, partnerId: String, price: Double, lineItemName:String, lineItemId:String, eventError: String ->
+                            rewardedEventListener?.DidLoadRewarded(eventPlacementName, eventLoadId, auctionId, partnerId, price, lineItemName, lineItemId, eventError)
                         }
                     )
                 }
@@ -150,7 +151,8 @@ class UnityBridge {
                         })
                 }
             })
-            return wrap(rewardedAd)
+
+            return trackLegacy(rewardedAd)
         }
 
         @JvmStatic
@@ -166,8 +168,8 @@ class UnityBridge {
             val bannerAd = HeliumBannerAd(UnityPlayer.currentActivity, placementName, wantedSize, object : HeliumBannerAdListener {
                 override fun onAdCached(placementName: String, loadId: String, winningBidInfo: Map<String, String>, error: ChartboostMediationAdException?) {
                     serializeLoadEvent(placementName, loadId, winningBidInfo, error,
-                        LoadEventConsumer { eventPlacementName: String, eventLoadId: String, auctionId: String, partnerId: String, price: Double, eventLineItemId:String, eventError: String ->
-                            bannerEventsListener?.DidLoadBanner(eventPlacementName, eventLoadId, auctionId, partnerId, price, eventLineItemId, eventError)
+                        LoadEventConsumer { eventPlacementName: String, eventLoadId: String, auctionId: String, partnerId: String, price: Double, lineItemName:String, lineItemId:String, eventError: String ->
+                            bannerEventsListener?.DidLoadBanner(eventPlacementName, eventLoadId, auctionId, partnerId, price, lineItemName, lineItemId, eventError)
                         }
                     )
                 }
@@ -194,6 +196,12 @@ class UnityBridge {
         @JvmStatic
         fun getUIScaleFactor(): Float {
             return UnityPlayer.currentActivity.resources?.displayMetrics?.density ?: DisplayMetrics.DENSITY_DEFAULT.toFloat()
+        }
+        
+        private fun trackLegacy(ad: HeliumAd): AdWrapper {
+            val wrapped = wrap(ad)
+            AdStore.trackLegacyAd(wrapped)
+            return wrapped;
         }
     }
 }

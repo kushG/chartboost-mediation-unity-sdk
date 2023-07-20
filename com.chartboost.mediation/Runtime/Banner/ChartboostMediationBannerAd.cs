@@ -1,4 +1,5 @@
 using System;
+using Chartboost.Events;
 
 namespace Chartboost.Banner
 {
@@ -32,11 +33,11 @@ namespace Chartboost.Banner
     /// <summary>
     /// Chartboost Mediation banner ad object.
     /// </summary>
-    public class ChartboostMediationBannerAd : ChartboostMediationBannerBase
+    public sealed class ChartboostMediationBannerAd : ChartboostMediationBannerBase
     {
         private readonly ChartboostMediationBannerBase _platformBanner;
 
-        public ChartboostMediationBannerAd(string placementName, ChartboostMediationBannerAdSize size) : base( placementName, size)
+        internal ChartboostMediationBannerAd(string placementName, ChartboostMediationBannerAdSize size) : base(placementName, size)
         {
             #if UNITY_EDITOR
             _platformBanner = new ChartboostMediationBannerUnsupported(placementName, size);
@@ -49,38 +50,69 @@ namespace Chartboost.Banner
             #endif
         }
 
+        internal override bool IsValid { get => _platformBanner.IsValid; set => _platformBanner.IsValid = value; }
+
         /// <inheritdoc cref="ChartboostMediationBannerBase.SetKeyword"/>>
         public override bool SetKeyword(string keyword, string value) 
-            => _platformBanner.SetKeyword(keyword, value);
+            => IsValid && _platformBanner.SetKeyword(keyword, value);
         
         /// <inheritdoc cref="ChartboostMediationBannerBase.RemoveKeyword"/>>
         public override string RemoveKeyword(string keyword) 
-            => _platformBanner.RemoveKeyword(keyword);
+            => IsValid ? _platformBanner.RemoveKeyword(keyword) : null;
         
         /// <inheritdoc cref="ChartboostMediationBannerBase.Destroy"/>>
-        public override void Destroy() 
-            => _platformBanner.Destroy();
-        
+        public override void Destroy()
+        {
+            Destroy(false);
+        }
+
         /// <inheritdoc cref="ChartboostMediationBannerBase.Load"/>>
-        public override void Load(ChartboostMediationBannerAdScreenLocation location) 
-            => _platformBanner.Load(location);
+        public override void Load(ChartboostMediationBannerAdScreenLocation location)
+        {
+            if (IsValid)
+                _platformBanner.Load(location);
+        }
 
         /// <inheritdoc cref="ChartboostMediationBannerBase.Load"/>>
         public override void Load(float x, float y, int width, int height)
-            => _platformBanner.Load(x, y, width, height);
+        {
+            if (IsValid)
+                _platformBanner.Load(x, y, width, height);
+        }
 
         /// <inheritdoc cref="ChartboostMediationBannerBase.SetVisibility"/>>
-        public override void SetVisibility(bool isVisible) 
-            =>_platformBanner.SetVisibility(isVisible);
+        public override void SetVisibility(bool isVisible)
+        {
+            if (IsValid)
+                _platformBanner.SetVisibility(isVisible);
+        }
 
         /// <inheritdoc cref="ChartboostMediationBannerBase.ClearLoaded"/>>
-        public override void ClearLoaded() 
-            => _platformBanner.ClearLoaded();
+        public override void ClearLoaded()
+        {
+            if (IsValid)
+                _platformBanner.ClearLoaded();
+        }
 
         /// <inheritdoc cref="ChartboostMediationBannerBase.Remove"/>>
+        [Obsolete("Remove has been deprecated, please use Destroy instead.")]
         public override void Remove()
-            =>_platformBanner.Remove();
+        {
+            if (IsValid)
+                _platformBanner.Remove();
+        }
 
+        private void Destroy(bool isCollected)
+        {
+            if (!IsValid)
+                return;
+            _platformBanner.Destroy();
+            base.Destroy();
+            
+            if (isCollected) 
+                EventProcessor.ReportUnexpectedSystemError($"Banner Ad with placement: {placementName}, got GC. Make sure to properly dispose of ads utilizing Destroy for the best integration experience.");
+        }
+        
         /// <inheritdoc cref="ChartboostMediationBannerBase.EnableDrag"/>>
         public override void EnableDrag(Action<float, float> onDrag = null)
             => _platformBanner.EnableDrag(onDrag);
@@ -88,5 +120,7 @@ namespace Chartboost.Banner
         /// <inheritdoc cref="ChartboostMediationBannerBase.DisableDrag"/>>
         public override void DisableDrag()
             => _platformBanner.DisableDrag();
+
+        ~ChartboostMediationBannerAd() => Destroy(true);
     }
 }

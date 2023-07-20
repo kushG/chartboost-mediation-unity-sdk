@@ -7,7 +7,7 @@ namespace Chartboost.FullScreen.Interstitial
     /// <summary>
     /// Chartboost Mediation interstitial object for iOS.
     /// </summary>
-    public class ChartboostMediationInterstitialIOS : ChartboostMediationFullScreenBase
+    internal sealed class ChartboostMediationInterstitialIOS : ChartboostMediationFullScreenBase
     {
         private readonly IntPtr _uniqueId;
 
@@ -16,7 +16,9 @@ namespace Chartboost.FullScreen.Interstitial
             logTag = "ChartboostMediationInterstitial (iOS)";
             _uniqueId = _chartboostMediationGetInterstitialAd(placementName);
         }
-        
+
+        internal override bool IsValid { get; set; } = true;
+
         /// <inheritdoc cref="ChartboostMediationFullScreenBase.SetKeyword"/>>
         public override bool SetKeyword(string keyword, string value)
         {
@@ -35,7 +37,6 @@ namespace Chartboost.FullScreen.Interstitial
         public override void Load()
         {
             base.Load();
-            GC.Collect(); // make sure previous i12 ads get destructed if necessary
             _chartboostMediationInterstitialAdLoad(_uniqueId);
         }
 
@@ -64,10 +65,8 @@ namespace Chartboost.FullScreen.Interstitial
         {
             base.Destroy();
             _chartboostMediationFreeAdObject(_uniqueId, placementName, false);
+            IsValid = false;
         }
-
-        ~ChartboostMediationInterstitialIOS() 
-            => _chartboostMediationFreeAdObject(_uniqueId, placementName, false);
 
         #region External Methods
         [DllImport("__Internal")]

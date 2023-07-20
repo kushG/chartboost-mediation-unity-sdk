@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Chartboost.FullScreen.Rewarded
 {
-    public class ChartboostMediationRewardedIOS : ChartboostMediationRewardedBase
+    internal sealed class ChartboostMediationRewardedIOS : ChartboostMediationRewardedBase
     {
         private readonly IntPtr _uniqueId;
 
@@ -13,6 +13,8 @@ namespace Chartboost.FullScreen.Rewarded
             logTag = "ChartboostMediationRewarded (iOS)";
             _uniqueId = _chartboostMediationGetRewardedAd(placementName);
         }
+
+        internal override bool IsValid { get; set; } = true;
 
         /// <inheritdoc cref="ChartboostMediationRewardedBase.SetKeyword"/>>
         public override bool SetKeyword(string keyword, string value)
@@ -60,6 +62,7 @@ namespace Chartboost.FullScreen.Rewarded
         {
             base.Destroy();
             _chartboostMediationFreeAdObject(_uniqueId, placementName, false);
+            IsValid = false;
         }
 
         /// <inheritdoc cref="ChartboostMediationRewardedBase.SetCustomData"/>>
@@ -68,9 +71,6 @@ namespace Chartboost.FullScreen.Rewarded
             base.SetCustomData(customData);
             _chartboostMediationRewardedAdSetCustomData(_uniqueId, customData);
         }
-
-        ~ChartboostMediationRewardedIOS()
-            => _chartboostMediationFreeAdObject(_uniqueId, placementName, false);
 
         #region External Methods
         [DllImport("__Internal")]

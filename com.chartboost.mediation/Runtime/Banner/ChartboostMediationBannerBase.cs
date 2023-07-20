@@ -12,6 +12,7 @@ namespace Chartboost.Banner
         protected static string LogTag = "ChartboostMediationBanner (Base)";
         protected readonly string placementName;
         private readonly ChartboostMediationBannerAdSize _size;
+        internal abstract bool IsValid { get; set; }
 
         protected ChartboostMediationBannerBase(string placementName, ChartboostMediationBannerAdSize size)
         {
@@ -35,7 +36,9 @@ namespace Chartboost.Banner
 
         /// <inheritdoc cref="IChartboostMediationAd.Destroy"/>>
         public virtual void Destroy()
-            => Logger.Log(LogTag, $"destroying banner: {placementName}");
+        {
+            Logger.Log(LogTag, $"destroying banner: {placementName}");
+        }
 
         /// <inheritdoc cref="IChartboostMediationBannerAd.Load"/>>
         public virtual void Load(ChartboostMediationBannerAdScreenLocation location)
@@ -54,6 +57,7 @@ namespace Chartboost.Banner
             => Logger.Log(LogTag, $"clearing banner: {placementName}");
 
         /// <inheritdoc cref="IChartboostMediationBannerAd.Remove"/>>
+        [Obsolete("Remove has been deprecated, please use Destroy instead.")]
         public virtual void Remove()
             => Logger.Log(LogTag, $"removing banner: {placementName}");
 
@@ -69,11 +73,11 @@ namespace Chartboost.Banner
     /// <summary>
     /// Chartboost Mediation banner object for unsupported platforms.
     /// </summary>
-    public class ChartboostMediationBannerUnsupported : ChartboostMediationBannerBase
+    public sealed class ChartboostMediationBannerUnsupported : ChartboostMediationBannerBase
     {
-        public ChartboostMediationBannerUnsupported(string placementName, ChartboostMediationBannerAdSize size) : base(placementName, size)
-        {
-            LogTag = "ChartboostMediationBanner (Unsupported)";
-        }
+        public ChartboostMediationBannerUnsupported(string placementName, ChartboostMediationBannerAdSize size) : base(placementName, size) 
+            => LogTag = "ChartboostMediationBanner (Unsupported)";
+
+        internal override bool IsValid { get; set; }
     }
 }

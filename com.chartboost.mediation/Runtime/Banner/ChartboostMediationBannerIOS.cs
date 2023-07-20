@@ -1,6 +1,5 @@
 #if UNITY_IOS
 using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using AOT;
 using UnityEngine;
@@ -10,7 +9,7 @@ namespace Chartboost.Banner
     /// <summary>
     /// Chartboost Mediation banner object for iOS.
     /// </summary>
-    public class ChartboostMediationBannerIOS : ChartboostMediationBannerBase
+    public sealed class ChartboostMediationBannerIOS : ChartboostMediationBannerBase
     {
         public Action<float, float> dragListener;
 
@@ -42,6 +41,8 @@ namespace Chartboost.Banner
             _adObjects[_uniqueId] = this;
         }
 
+        internal override bool IsValid { get; set; } = true;
+
         /// <inheritdoc cref="ChartboostMediationBannerBase.SetKeyword"/>>
         public override bool SetKeyword(string keyword, string value)
         {
@@ -54,6 +55,14 @@ namespace Chartboost.Banner
         {
             base.RemoveKeyword(keyword);
             return _chartboostMediationBannerRemoveKeyword(_uniqueId, keyword);
+        }
+
+        public override void Destroy()
+        {
+            base.Destroy();
+            _chartboostMediationBannerRemove(_uniqueId);
+            _chartboostMediationFreeAdObject(_uniqueId, placementName, true);
+            IsValid = false;
         }
 
         /// <inheritdoc cref="ChartboostMediationBannerBase.Load"/>>
@@ -87,7 +96,7 @@ namespace Chartboost.Banner
         public override void Remove()
         {
             base.Remove();
-            _chartboostMediationBannerRemove(_uniqueId);
+            Destroy();
         }
 
         public override void EnableDrag(Action<float, float> onDrag = null)
@@ -102,9 +111,6 @@ namespace Chartboost.Banner
             base.DisableDrag();
             _chartboostMediationDisableBannerDrag(_uniqueId);
         }
-
-        ~ChartboostMediationBannerIOS()
-            => _chartboostMediationFreeAdObject(_uniqueId, placementName, true);
 
         #region External Methods
         [DllImport("__Internal")]

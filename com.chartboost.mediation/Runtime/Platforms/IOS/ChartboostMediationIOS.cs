@@ -1,9 +1,9 @@
 #if UNITY_IPHONE
+using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using AOT;
-using Chartboost.Placements;
 using Chartboost.Requests;
+using Chartboost.Utilities;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Chartboost.Platforms.IOS
 {
-    public sealed partial class ChartboostMediationIOS : ChartboostMediationExternal
+    internal sealed partial class ChartboostMediationIOS : ChartboostMediationExternal
     {
         #region Objective-C Extern Members
         [DllImport("__Internal")]
@@ -87,6 +87,16 @@ namespace Chartboost.Platforms.IOS
             ChartboostMediationSettings.IOSAppId = appId;
             ChartboostMediationSettings.IOSAppSignature = appSignature;
             var initializationOptions = GetInitializationOptions();
+            _chartboostMediationInit(appId, appSignature, Application.unityVersion, initializationOptions, initializationOptions.Length);
+            IsInitialized = true;
+        }
+
+        public override void StartWithOptions(string appId, string appSignature, string[] initializationOptions = null)
+        {
+            base.StartWithOptions(appId, appSignature, initializationOptions);
+            ChartboostMediationSettings.IOSAppId = appId;
+            ChartboostMediationSettings.IOSAppSignature = appSignature;
+            initializationOptions ??= Array.Empty<string>();
             _chartboostMediationInit(appId, appSignature, Application.unityVersion, initializationOptions, initializationOptions.Length);
             IsInitialized = true;
         }

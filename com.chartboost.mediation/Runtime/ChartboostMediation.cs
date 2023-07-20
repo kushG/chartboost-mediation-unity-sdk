@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Chartboost.AdFormats.Banner.Unity;
 using Chartboost.Banner;
+using Chartboost.Events;
 using Chartboost.FullScreen.Interstitial;
 using Chartboost.FullScreen.Rewarded;
 using Chartboost.Platforms;
@@ -23,7 +24,7 @@ namespace Chartboost
     /// </summary>
     public sealed class ChartboostMediation
     {
-        internal static readonly ChartboostMediationExternal _chartboostMediationExternal;
+        private static readonly ChartboostMediationExternal _chartboostMediationExternal;
 
         static ChartboostMediation() 
         {
@@ -184,6 +185,9 @@ namespace Chartboost
         // Functions for showing ads
         //////////////////////////////////////////////////////
 
+        /// <summary>
+        /// Load a fullscreen ad (interstitial, rewarded video, rewarded interstitial).
+        /// </summary>
         public static async Task<ChartboostMediationFullscreenAdLoadResult> LoadFullscreenAd(ChartboostMediationFullscreenAdLoadRequest loadRequest) 
             => await _chartboostMediationExternal.LoadFullscreenAd(loadRequest);
 
@@ -235,10 +239,17 @@ namespace Chartboost
                 _chartboostMediationExternal.Init();
         }
 
+        [Obsolete("StartWithAppIdAndAppSignature is obsolete and will be removed in future versions, please use StartWithOptions instead.")]
         public static void StartWithAppIdAndAppSignature(string appId, string appSignature)
         {
             if (!ChartboostMediationExternal.IsInitialized)
                 _chartboostMediationExternal.InitWithAppIdAndSignature(appId, appSignature);
+        }
+
+        public static void StartWithOptions(string appId, string appSignature, string[] options = null)
+        {
+            if (!ChartboostMediationExternal.IsInitialized)
+                _chartboostMediationExternal.StartWithOptions(appId, appSignature, options);
         }
 
         public static void SetSubjectToCoppa(bool isSubject) => _chartboostMediationExternal.SetSubjectToCoppa(isSubject);

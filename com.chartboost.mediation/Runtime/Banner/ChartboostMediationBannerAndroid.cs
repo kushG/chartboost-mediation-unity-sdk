@@ -2,6 +2,7 @@
 using System;
 using Chartboost.Interfaces;
 using Chartboost.Platforms.Android;
+using Chartboost.Utilities;
 using UnityEngine;
 
 namespace Chartboost.Banner
@@ -9,16 +10,20 @@ namespace Chartboost.Banner
     /// <summary>
     /// Chartboost Mediation banner object for Android.
     /// </summary>
-    public class ChartboostMediationBannerAndroid : ChartboostMediationBannerBase
+    public sealed class ChartboostMediationBannerAndroid : ChartboostMediationBannerBase
     {
         private readonly AndroidJavaObject _androidAd;
+        private readonly int _uniqueId;
 
         public ChartboostMediationBannerAndroid(string placementName, ChartboostMediationBannerAdSize size) : base(placementName, size)
         {
             LogTag = "ChartboostMediationBanner (Android)";
             using var unityBridge = ChartboostMediationAndroid.GetUnityBridge();
             _androidAd = unityBridge.CallStatic<AndroidJavaObject>("getBannerAd", placementName, (int)size);
+            _uniqueId = _androidAd.HashCode();
         }
+
+        internal override bool IsValid { get; set; } = true;
 
         /// <inheritdoc cref="IChartboostMediationAd.SetKeyword"/>>
         public override bool SetKeyword(string keyword, string value)
@@ -38,7 +43,9 @@ namespace Chartboost.Banner
         public override void Destroy()
         {
             base.Destroy();
-            _androidAd.Call("destroy");
+            IsValid = false;
+            _androidAd.Dispose();
+            AndroidAdStore.ReleaseLegacyAd(_uniqueId);
         }
 
         /// <inheritdoc cref="IChartboostMediationBannerAd.Load(Chartboost.Banner.ChartboostMediationBannerAdScreenLocation)"/>>
@@ -70,9 +77,11 @@ namespace Chartboost.Banner
         }
 
         /// <inheritdoc cref="IChartboostMediationBannerAd.Remove"/>>
+        [Obsolete("Remove has been deprecated, please use Destroy instead.")]
         public override void Remove()
         {
             //android doesn't have a remove method. Instead, calling destroy
+            base.Remove();
             Destroy();
         }
 
