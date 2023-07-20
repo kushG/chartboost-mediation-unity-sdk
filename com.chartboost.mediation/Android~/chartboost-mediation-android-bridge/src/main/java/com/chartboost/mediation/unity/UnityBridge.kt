@@ -1,5 +1,6 @@
 package com.chartboost.mediation.unity
 
+import android.util.DisplayMetrics
 import com.chartboost.heliumsdk.*
 import com.chartboost.heliumsdk.ad.*
 import com.chartboost.heliumsdk.ad.HeliumBannerAd.HeliumBannerSize
@@ -190,7 +191,7 @@ class UnityBridge {
                         })
                 }
             })
-            return BannerAdWrapper.wrap(bannerAd)
+            return trackBannerLegacy(bannerAd)
         }
 
         @JvmStatic
@@ -201,6 +202,12 @@ class UnityBridge {
         private fun trackLegacy(ad: HeliumAd): AdWrapper {
             val wrapped = wrap(ad)
             AdStore.trackLegacyAd(wrapped)
+            return wrapped;
+        }
+
+        private fun trackBannerLegacy(ad:HeliumBannerAd) : BannerAdWrapper {
+            val wrapped = BannerAdWrapper(ad)
+            AdStore.trackLegacyBannerAd(wrapped)
             return wrapped;
         }
     }

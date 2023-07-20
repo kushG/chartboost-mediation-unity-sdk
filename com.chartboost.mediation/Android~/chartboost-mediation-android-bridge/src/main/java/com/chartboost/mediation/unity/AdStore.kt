@@ -7,7 +7,7 @@ class AdStore {
         private val TAG = AdStore::class.java.simpleName
         private var fullscreenAdStore: MutableMap<Int, ChartboostMediationFullscreenAd> = mutableMapOf()
         private var legacyAdStore: MutableMap<Int, AdWrapper> = mutableMapOf()
-
+        private var legacyBannerAdStore: MutableMap<Int, BannerAdWrapper> = mutableMapOf()
         @JvmStatic
         fun trackLegacyAd(legacyAd: AdWrapper)
         {
@@ -21,6 +21,19 @@ class AdStore {
             val legacyAd = legacyAdStore[hashCode]
             legacyAd?.destroy()
             legacyAdStore.remove(hashCode)
+        }
+
+        @JvmStatic
+        fun trackLegacyBannerAd(legacyBannerAd: BannerAdWrapper){
+            val hashCode = legacyBannerAd.hashCode()
+            legacyBannerAdStore[hashCode] = legacyBannerAd
+        }
+
+        @JvmStatic
+        fun releaseLegacyBannerAd(hashCode: Int){
+            val legacyBannerAd = legacyBannerAdStore[hashCode]
+            legacyBannerAd?.destroy()
+            legacyBannerAdStore.remove(hashCode)
         }
 
         @JvmStatic
