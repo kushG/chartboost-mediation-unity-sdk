@@ -45,7 +45,7 @@ namespace Chartboost.Banner
             base.Destroy();
             IsValid = false;
             _androidAd.Dispose();
-            AndroidAdStore.ReleaseLegacyAd(_uniqueId);
+            AndroidAdStore.ReleaseLegacyBannerAd(_uniqueId);
         }
 
         /// <inheritdoc cref="IChartboostMediationBannerAd.Load(Chartboost.Banner.ChartboostMediationBannerAdScreenLocation)"/>>

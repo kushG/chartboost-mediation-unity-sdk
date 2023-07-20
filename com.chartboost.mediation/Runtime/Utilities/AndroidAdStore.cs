@@ -15,6 +15,15 @@ namespace Chartboost.Utilities
                 adStore.CallStatic("releaseLegacyAd", uniqueId);
             });
         }
+        
+        public static void ReleaseLegacyBannerAd(int uniqueId)
+        {
+            EventProcessor.ProcessEvent(() =>
+            {
+                using var adStore = new AndroidJavaClass(QualifiedAdStoreName);
+                adStore.CallStatic("releaseLegacyBannerAd", uniqueId);
+            });
+        }
 
         public static void ReleaseFullscreenAd(int uniqueId)
         {
