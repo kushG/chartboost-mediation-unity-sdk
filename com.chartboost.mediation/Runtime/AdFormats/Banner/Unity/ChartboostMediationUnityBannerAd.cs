@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Chartboost.Banner;
-using Chartboost.Placements;
 using Chartboost.Utilities;
 using JetBrains.Annotations;
 using UnityEngine;
