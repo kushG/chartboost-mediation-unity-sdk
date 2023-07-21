@@ -112,14 +112,20 @@ namespace Chartboost.Banner
             if (isCollected) 
                 EventProcessor.ReportUnexpectedSystemError($"Banner Ad with placement: {placementName}, got GC. Make sure to properly dispose of ads utilizing Destroy for the best integration experience.");
         }
-        
+
         /// <inheritdoc cref="ChartboostMediationBannerBase.EnableDrag"/>>
         public override void EnableDrag(Action<float, float> onDrag = null)
-            => _platformBanner.EnableDrag(onDrag);
+        {
+            if(IsValid)
+                _platformBanner.EnableDrag(onDrag); 
+        }
 
         /// <inheritdoc cref="ChartboostMediationBannerBase.DisableDrag"/>>
         public override void DisableDrag()
-            => _platformBanner.DisableDrag();
+        {
+            if(IsValid)
+                _platformBanner.DisableDrag();
+        }
 
         ~ChartboostMediationBannerAd() => Destroy(true);
     }
