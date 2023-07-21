@@ -22,6 +22,8 @@ typedef void (*ChartboostMediationBannerDragEvent)(void* uniqueId, float x, floa
 
 @property HeliumBannerView* bannerView;
 @property ChartboostMediationBannerDragEvent dragListener;
+@property UIPanGestureRecognizer *panGesture;
+
 
 - (instancetype)initWithBannerView: (HeliumBannerView*) bannerView;
 - (void)enableDragWithDragListener:(ChartboostMediationBannerDragEvent) dragListener;

@@ -17,13 +17,20 @@
 
 - (void)enableDragWithDragListener:(ChartboostMediationBannerDragEvent)dragListener {
     
-    UIPanGestureRecognizer *panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
-    [self.bannerView addGestureRecognizer:panGesture];
+    // remove any previously assigned pan gesture
+    [self.bannerView removeGestureRecognizer:self.panGesture];
+    
+    self.panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
+    [self.bannerView addGestureRecognizer:self.panGesture];
         
     self.dragListener = dragListener;
 }
 
 - (void)disableDrag {
+    // remove pan gesture
+    [self.bannerView removeGestureRecognizer:self.panGesture];
+    
+    // remove unity listener
     self.dragListener = NULL;
 }
 

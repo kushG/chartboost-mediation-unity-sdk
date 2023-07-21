@@ -35,6 +35,7 @@ public class Demo : MonoBehaviour
     public Sprite bannerVisualizerSprite;
     private ChartboostMediationUnityBannerAd _bannerAd;
     private bool _bannerAdIsVisible;
+    private bool _bannerAdIsDraggable = true;
 
     public ScrollRect outputTextScrollRect;
     public Text outputText;
@@ -259,6 +260,7 @@ public class Demo : MonoBehaviour
         }
 
         unityBannerAd.autoLoadOnInit = false;
+        unityBannerAd.Draggable = _bannerAdIsDraggable;
         unityBannerAd.DidLoadBanner += DidLoadBanner;
         unityBannerAd.DidClickBanner += DidClickBanner;
         unityBannerAd.DidRecordImpressionBanner += DidRecordImpressionBanner;
@@ -299,6 +301,15 @@ public class Demo : MonoBehaviour
             _bannerAd.SetVisibility(_bannerAdIsVisible);
         }
         Log("Banner Visibility Toggled");
+    }
+
+    public void OnToggleDragClick()
+    {
+        if (_bannerAd != null)
+        {
+            _bannerAdIsDraggable = !_bannerAdIsDraggable;
+            _bannerAd.Draggable = _bannerAdIsDraggable;
+        }
     }
 
     private void DidLoadBanner(string placementName, string loadId, BidInfo info, string error)
